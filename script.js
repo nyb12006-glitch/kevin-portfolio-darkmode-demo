@@ -62,27 +62,21 @@
     revealEls.forEach(function (el) { io.observe(el); });
   }
 
-  /* ---------- Contador de stats ---------- */
-  var statEls = document.querySelectorAll(".stat-num[data-count]");
-  var statIO = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (!entry.isIntersecting) return;
-      var el = entry.target;
-      var target = parseInt(el.getAttribute("data-count"), 10) || 0;
-      if (prefersReduced) { el.textContent = "+" + target; statIO.unobserve(el); return; }
-      var start = null, duration = 1400;
-      function step(ts) {
-        if (!start) start = ts;
-        var p = Math.min((ts - start) / duration, 1);
-        var eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = "+" + Math.round(eased * target);
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-      statIO.unobserve(el);
+  /* ---------- Intro del Hero: animación de entrada garantizada al cargar ---------- */
+  var introEls = document.querySelectorAll(".intro-el");
+  if (prefersReduced) {
+    introEls.forEach(function (el) { el.classList.add("in"); });
+  } else {
+    // Doble rAF: aseguramos que el navegador pinte el estado oculto (opacity:0)
+    // al menos un frame antes de animar, si no la transición no se aprecia.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        introEls.forEach(function (el, i) {
+          setTimeout(function () { el.classList.add("in"); }, i * 130);
+        });
+      });
     });
-  }, { threshold: 0.5 });
-  statEls.forEach(function (el) { statIO.observe(el); });
+  }
 
   /* ---------- Acordeón "Sobre mí" ---------- */
   document.querySelectorAll(".about-item").forEach(function (item) {
@@ -94,24 +88,58 @@
     });
   });
 
-  /* ---------- Palabras flotantes del hero: parallax suave con el ratón ---------- */
-  if (!prefersReduced && !isTouch) {
-    var floatWords = document.querySelectorAll("#floatWords span");
+  /* ---------- Parallax: Hero (contenido + palabras flotantes) y títulos de sección ---------- */
+  var heroSection = document.getElementById("inicio");
+  var heroInner = document.getElementById("heroInner");
+  var heroGlow = document.getElementById("heroGlow");
+  var floatWords = document.querySelectorAll("#floatWords span");
+  var parallaxHeadings = document.querySelectorAll("[data-parallax]");
+
+  if (!prefersReduced) {
     var mx = 0, my = 0, cx = 0, cy = 0;
-    window.addEventListener("mousemove", function (e) {
-      mx = (e.clientX / window.innerWidth - 0.5) * 2;
-      my = (e.clientY / window.innerHeight - 0.5) * 2;
-    }, { passive: true });
-    function loopFloat() {
+    if (!isTouch) {
+      window.addEventListener("mousemove", function (e) {
+        mx = (e.clientX / window.innerWidth - 0.5) * 2;
+        my = (e.clientY / window.innerHeight - 0.5) * 2;
+        if (heroGlow) {
+          heroGlow.style.setProperty("--gx", e.clientX + "px");
+          heroGlow.style.setProperty("--gy", e.clientY + "px");
+        }
+      }, { passive: true });
+    }
+
+    function renderParallax() {
       cx += (mx - cx) * 0.06;
       cy += (my - cy) * 0.06;
+
+      // Palabras flotantes: parallax de ratón + deriva vertical al hacer scroll (profundidad)
+      var heroRect = heroSection ? heroSection.getBoundingClientRect() : null;
+      var heroProgress = heroRect ? Math.min(Math.max(-heroRect.top / (heroSection.offsetHeight || 1), 0), 1) : 0;
+
       floatWords.forEach(function (el, i) {
         var depth = ((i % 3) + 1) * 10;
-        el.style.transform = "translate(" + (cx * depth) + "px," + (cy * depth) + "px)";
+        var scrollDrift = heroProgress * depth * 3.2;
+        el.style.transform = "translate(" + (cx * depth) + "px," + (cy * depth - scrollDrift) + "px)";
       });
-      requestAnimationFrame(loopFloat);
+
+      // Contenido del Hero: sube y se desvanece según se hace scroll
+      if (heroInner) {
+        heroInner.style.transform = "translateY(" + (heroProgress * 90) + "px)";
+        heroInner.style.opacity = String(Math.max(1 - heroProgress * 1.3, 0));
+      }
+
+      // Títulos de sección: leve deriva vertical según su posición en el viewport
+      var vh = window.innerHeight;
+      parallaxHeadings.forEach(function (el) {
+        var rect = el.getBoundingClientRect();
+        var fromCenter = (rect.top + rect.height / 2 - vh / 2) / vh;
+        var amplitude = parseFloat(el.getAttribute("data-parallax")) || 40;
+        el.style.transform = "translateY(" + (fromCenter * amplitude) + "px)";
+      });
+
+      requestAnimationFrame(renderParallax);
     }
-    requestAnimationFrame(loopFloat);
+    requestAnimationFrame(renderParallax);
   }
 
   /* ---------- Marquee: pausa al pasar el ratón ---------- */
@@ -119,6 +147,20 @@
   if (marquee) {
     marquee.addEventListener("mouseenter", function () { marquee.style.animationPlayState = "paused"; });
     marquee.addEventListener("mouseleave", function () { marquee.style.animationPlayState = "running"; });
+  }
+
+  /* ---------- Cursor personalizado: punto que sigue al ratón y crece sobre enlaces ---------- */
+  var cursorDot = document.getElementById("cursorDot");
+  if (!isTouch && cursorDot && !prefersReduced) {
+    document.querySelectorAll("a, button").forEach(function (el) {
+      el.addEventListener("mouseenter", function () { cursorDot.classList.add("grow"); });
+      el.addEventListener("mouseleave", function () { cursorDot.classList.remove("grow"); });
+    });
+    window.addEventListener("mousemove", function (e) {
+      cursorDot.classList.add("show");
+      cursorDot.style.left = e.clientX + "px";
+      cursorDot.style.top = e.clientY + "px";
+    }, { passive: true });
   }
 
   /* ---------- Trabajos: miniatura que sigue el cursor + chip ---------- */
@@ -130,9 +172,11 @@
       item.addEventListener("mouseenter", function () {
         var src = item.getAttribute("data-img");
         if (thumb && src) { thumbImg.src = src; thumb.classList.add("show"); }
+        if (cursorDot) cursorDot.classList.add("show-hidden");
       });
       item.addEventListener("mouseleave", function () {
         if (thumb) thumb.classList.remove("show");
+        if (cursorDot) cursorDot.classList.remove("show-hidden");
       });
     });
     document.querySelectorAll("a[target='_blank']").forEach(function (a) {
