@@ -83,6 +83,18 @@ h1,h2,h3{
 }
 .intro-el.in{opacity:1;transform:translateY(0);filter:blur(0);}
 
+/* ---------- Fondo con textura (placeholder: sin fotos, degradados + rejilla) ---------- */
+.bg-texture{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(760px circle at 14% 12%, rgba(248,128,200,.12), transparent 60%),
+    radial-gradient(620px circle at 88% 22%, rgba(248,128,200,.06), transparent 55%),
+    radial-gradient(900px circle at 50% 96%, rgba(255,255,255,.05), transparent 65%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 72px),
+    var(--bg);
+}
+
 /* ---------- Brillo que sigue al ratón en el Hero ---------- */
 .hero-glow{
   position:absolute;inset:0;z-index:1;pointer-events:none;
@@ -238,15 +250,14 @@ body::after{
 .section-head h2{font-size:clamp(2rem,4.4vw,3.2rem);}
 .section-desc{max-width:26em;color:var(--grey-500);font-size:1rem;}
 
-/* ---------- Sobre mí — acordeón ---------- */
+/* ---------- Sobre mí — lista con descripción siempre visible ---------- */
 .about-list{border-top:1px solid var(--border);}
 .about-item{
   border-bottom:1px solid var(--border);
   padding:1.8em 0;
-  cursor:pointer;
 }
 .about-item-head{
-  display:flex;align-items:center;gap:1.6em;
+  display:flex;align-items:baseline;gap:1.6em;
 }
 .about-item-num{
   font-family:var(--font-display);
@@ -260,18 +271,9 @@ body::after{
   transition:color var(--dur) var(--ease);
 }
 .about-item:hover .about-item-title{color:var(--accent);}
-.about-item-icon{
-  font-size:1.6rem;color:var(--grey-500);
-  transition:transform var(--dur) var(--ease), color var(--dur) var(--ease);
-  flex-shrink:0;
-}
-.about-item.open .about-item-icon{transform:rotate(45deg);color:var(--accent);}
 .about-item-body{
-  max-height:0;overflow:hidden;
-  transition:max-height var(--dur) var(--ease), padding var(--dur) var(--ease);
-  padding-left:4em;
+  padding-left:4em;padding-top:.7em;
 }
-.about-item.open .about-item-body{max-height:12em;padding-top:1em;}
 .about-item-body p{color:var(--grey-500);max-width:40em;font-size:1rem;line-height:1.6;}
 
 /* ---------- Stack ---------- */

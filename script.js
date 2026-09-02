@@ -78,16 +78,6 @@
     });
   }
 
-  /* ---------- Acordeón "Sobre mí" ---------- */
-  document.querySelectorAll(".about-item").forEach(function (item) {
-    var head = item.querySelector(".about-item-head");
-    head.addEventListener("click", function () {
-      var wasOpen = item.classList.contains("open");
-      document.querySelectorAll(".about-item.open").forEach(function (o) { o.classList.remove("open"); });
-      if (!wasOpen) item.classList.add("open");
-    });
-  });
-
   /* ---------- Parallax: Hero (contenido + palabras flotantes) y títulos de sección ---------- */
   var heroSection = document.getElementById("inicio");
   var heroInner = document.getElementById("heroInner");
