@@ -145,19 +145,29 @@
     }, { passive: true });
   }
 
-  /* ---------- Videoclips desde projects.js ---------- */
+  /* ---------- Videoclips desde projects.js (miniatura real + play al clic) ---------- */
   var videoGrid = document.getElementById("videoGrid");
   if (videoGrid && typeof projects !== "undefined") {
     projects.forEach(function (p) {
       var card = document.createElement("div");
       card.className = "video-card reveal";
-      var iframe = document.createElement("iframe");
-      iframe.src = "https://www.youtube.com/embed/" + p.youtubeId;
-      iframe.title = p.title;
-      iframe.loading = "lazy";
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      iframe.allowFullscreen = true;
-      card.appendChild(iframe);
+
+      var thumbBtn = document.createElement("button");
+      thumbBtn.type = "button";
+      thumbBtn.className = "video-thumb";
+      thumbBtn.setAttribute("aria-label", "Reproducir " + p.title);
+      thumbBtn.style.backgroundImage = "url(https://img.youtube.com/vi/" + p.youtubeId + "/hqdefault.jpg)";
+      thumbBtn.innerHTML = '<span class="play-icon">▶</span>';
+      thumbBtn.addEventListener("click", function () {
+        var iframe = document.createElement("iframe");
+        iframe.src = "https://www.youtube.com/embed/" + p.youtubeId + "?autoplay=1";
+        iframe.title = p.title;
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        card.innerHTML = "";
+        card.appendChild(iframe);
+      });
+      card.appendChild(thumbBtn);
       videoGrid.appendChild(card);
       if (!prefersReduced) {
         var obs = new IntersectionObserver(function (entries) {
